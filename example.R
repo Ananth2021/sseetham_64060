@@ -5,4 +5,4 @@ M1= 10
 m2 = 221
 
 z = M1-m2
-z
+z = fjldskj
