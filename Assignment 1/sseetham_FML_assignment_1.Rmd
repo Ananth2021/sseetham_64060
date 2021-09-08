@@ -1,1 +1,57 @@
-Assignment 1 files 
+---
+title: "Assigment1"
+author: "Ananth Kumar"
+date: "08/09/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+setwd("C:/Users/Ananth/OneDrive/Documents/R/win-library/4.0/00LOCK")
+
+
+setwd("C:/Users/Ananth/OneDrive/Desktop/MSBA Kent/Kent on campus employement/BA LAB/Lab 2")
+
+
+
+I have used the data given by professor patuwo in Business Analytics lab sessions for the undegrad students
+
+```{r}
+setwd("C:/Users/Ananth/OneDrive/Desktop/MSBA Kent/Kent on campus employement/BA LAB/Lab 2")
+
+DS<-read.csv("FML.csv")  # reading data into DS 
+DS # displays the content in the excel file
+```
+
+```{r}
+summary(DS) # descriptive statistics for the excel data 
+```
+```{r}
+summary(DS$Salary) # descriptive statistics for the quantitative data Salary , $ is used to access the column in DS dataframe 
+
+summary(log(DS$Salary)) #data transformation using log function 
+
+```
+
+```{r}
+Ftable <- table(DS$Personality) # personalities has categorical data 
+Ftable # displays the frequency of the category repeated in the personality & descriptive analysis of categorical data 
+
+Btable <-table(DS$Business) # business is a categorical data 
+Btable # displays the frequency of the category in Business column in excel sheet & descriptive analysis of categorical data 
+
+```
+```{r}
+barplot(DS$Salary,DS$Age) 
+
+plot(DS$Salary,DS$Age) # Scatter plot 
+
+```
