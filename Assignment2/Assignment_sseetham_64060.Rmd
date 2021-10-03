@@ -1,0 +1,157 @@
+---
+title: "Assignment"
+author: "Ananth Kumar"
+date: "29/09/2021"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+install.packages("ISLR")
+install.packages("caret")
+install.packages("tidyverse")
+install.packages("dplyr")
+install.packages("thePackage")
+library(thePackage)
+library(dplyr)
+install.packages("class")
+library(class)
+library(ISLR)
+library(caret)
+install.packages("FNN")
+library("dummies")
+install.packages("ROCR")
+library(tidyverse)
+
+
+library("dplyr")
+library("tidyr")
+
+
+.libPaths("C:\\Users\\Ananth\\OneDrive\\Desktop\\MSBA Kent\\Fall 2021\\Fundamentals of Machine Learning\\Assignment\\Ass 2 ")
+## R Markdown
+
+Consider the following customer: Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and Credit Card = 1. Perform a k-NN classification with all predictors except ID and ZIP code using k = 1. Remember to transform categorical predictors with more than two categories into dummy variables first. Specify the success class as 1 (loan acceptance), and use the default cutoff value of 0.5. How would this customer be classified?
+
+```{r}
+setwd("C:\\Users\\Ananth\\OneDrive\\Desktop\\MSBA Kent\\Fall 2021\\Fundamentals of Machine Learning\\Assignment\\Ass 2")
+rm(list=ls())
+Bank <- read.csv("UniversalBank.csv")
+head(Bank)
+```
+
+
+```{r}
+#dummy variables 
+
+Bank$Education = as.factor(Bank$Education) # as.factor is used when you want to convert the data type of a variable to a factor/categorical variable.
+library(dummies)
+library(dplyr)
+
+
+dummy_cat <-dummy.data.frame(select(Bank,-c(ZIP.Code,ID))) 
+
+dummy_cat$Personal.Loan = as.factor(dummy_cat$Personal.Loan)
+dummy_cat$CCAvg = as.integer(dummy_cat$CCAvg)
+dummy_cat 
+
+```
+
+
+
+```{r}
+library(class)
+library(ISLR)
+library(dplyr)
+library(caret)
+
+set.seed(124)
+train.index <- sample(row.names(dummy_cat), 0.6*dim(dummy_cat)[1])  # 60 % of the data into training set 
+valid.index <- setdiff(row.names(dummy_cat), train.index) 
+train.df <- dummy_cat[train.index, ]
+valid.df <- dummy_cat[valid.index, ] 
+
+condition = data.frame(Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education1 = 0, Education2 = 1, Education3 = 0, Mortgage = 0, Securities.Account = 0, CD.Account = 0, Online = 1, CreditCard = 1)
+
+
+normal <- preProcess(train.df[,-c(10)], method=c("center", "scale")) # normalizing the data 
+train.df <- predict(normal, train.df) # prediction using normalized data into training model 
+valid.df <- predict(normal, valid.df)# validating normailized data 
+condition <- predict(normal, condition)
+
+K1 <- knn(train = train.df[,-c(10)],test = condition, cl = train.df[,10], k=1, prob=TRUE)
+knn.attributes <- attributes(K1)
+knn.attributes[3]
+```
+
+
+What is a choice of k that balances between overfitting and ignoring the predictor information?
+
+```{r}
+accuracy.df <- data.frame(k = seq(1,5,1), accuracy = rep(0,5))
+
+for(i in 1:5) {
+  k2 <- knn(train = train.df[,-10],test = valid.df[,-10], cl = train.df[,10], k=i, prob=TRUE)
+  accuracy.df[i, 2] <- confusionMatrix(k2, valid.df[,10])$overall[1] # for loop to generate accuracy for k values from 1 to 5 
+}
+accuracy.df # k=1 has the highest accuracy
+```
+
+
+
+Show the confusion matrix for the validation data that results from using the best k.
+```{r}
+
+K3<- knn(train = train.df[,-10],test = valid.df[,-10], cl = train.df[,10], k=1, prob=TRUE)
+confusionMatrix(K3, valid.df[,10])
+```
+
+
+
+Consider the following customer: Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1 and Credit Card = 1. Classify the customer using the best k.
+
+```{r}
+
+customercl= data.frame(Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities.Account = 0, CD.Account = 0, Online = 1, CreditCard = 1)
+
+K4 <- knn(train = train.df[,-10],test = customercl, cl = train.df[,10], k=3, prob=TRUE)
+K4
+```
+
+
+
+Repartition the data, this time into training, validation, and test sets (50% : 30% : 20%). Apply the k-NN method with the k chosen above. Compare the confusion matrix of the test set with that of the training and validation sets. Comment on the differences and their reason.
+
+```{r}
+
+
+set.seed(1123)
+train.index <- sample(rownames(dummy_cat), 0.5*dim(dummy_cat)[1])  ## 50% of the data partition 
+set.seed(123)
+valid.index <- sample(setdiff(rownames(dummy_cat),train.index), 0.3*dim(dummy_cat)[1]) #30 % validation 
+test.index = setdiff(rownames(dummy_cat), union(train.index, valid.index))
+
+train.df <- dummy_cat[train.index, ]
+valid.df <- dummy_cat[valid.index, ]
+test.df <- dummy_cat[test.index, ]
+
+normal <- preProcess(train.df, method=c("center", "scale"))
+train.df <- predict(normal, train.df)
+valid.df <- predict(normal, valid.df)
+test.df <- predict(normal, test.df)
+
+testk <- knn(train = train.df[,-c(10)],test = test.df[,-c(10)], cl = train.df[,10], k=5, prob=TRUE)
+validk <- knn(train = train.df[,-c(10)],test = valid.df[,-c(10)], cl = train.df[,10], k=3, prob=TRUE)
+traink <- knn(train = train.df[,-c(10)],test = train.df[,-c(10)], cl = train.df[,10], k=4, prob=TRUE)
+
+confusionMatrix(testk, test.df[,10])
+confusionMatrix(validk, valid.df[,10])
+confusionMatrix(traink, train.df[,10])
+
+```
+
