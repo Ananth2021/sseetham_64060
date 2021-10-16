@@ -21,7 +21,7 @@ When you click the **Knit** button a document will be generated that includes bo
 .libPaths("C:\\Users\\Ananth\\OneDrive\\Desktop\\MSBA Kent\\Fall 2021\\Fundamentals of Machine Learning\\Assignment\\Ass 2 ")
 
 
-library(reshap)
+library(reshape)
 library(caret)
 library(e1071)
 
@@ -31,6 +31,7 @@ library(e1071)
 rm(list=ls()) 
 NB3 <- read.csv("UniversalBank.csv") 
 head(NB3) 
+tail(NB3)
 ```
 # Converting data into factors(categorical) mainly the one which are important to this.
 
@@ -65,7 +66,7 @@ cast[,c(1,2,3,14)] # casting column no 14 which credit card  and 1 , 2 , 3 colum
 B. Consider the task of classifying a customer who owns a bank credit card and is actively using online banking services. Looking at the pivot table, what is the probability that this customer will accept the loan offer? [This is the probability of loan acceptance (Loan = 1) conditional on having a bank credit card (CC = 1) and being an active user of online banking services (Online = 1)].
 ```{r}
 
-LoanCC1 <- 77/3000  # 77 is the value for Loan and CC =1 as per pivot table.  and 300 is the total count of 1924 + 198 + 801 + 77 = 3000 
+LoanCC1 <- 77/3000  # 77 is the value for Loan and CC =1 as per pivot table.  and 3000 is the total count of 1924 + 198 + 801 + 77 = 3000 
 LoanCC1 # which is 26 %.
 ```
 
@@ -96,11 +97,11 @@ P(Loan=0)
 
 ```{r}
 
-table(train[,c(14,10)])  # Creating a pivot table for column 14 and 10 which is credit card and personal loan 
+table(train[,c(14,10)])  # Creating a pivot table for column 14 and 10 which is credit card and personal loan from training 
           
-table(train[,c(13,10)])  #  Creating a pivot table for column 13 and 10 which is online and personal loan 
+table(train[,c(13,10)])  #  Creating a pivot table for column 13 and 10 which is online and personal loan from training 
 
-table(train[,c(10)]) # Pivot table for Personal loan.  There are 2725 and 275. 
+table(train[,c(10)]) # Pivot table for Personal loan.  There are 2725 and 275 from training 
 ```
 P (CC = 1 | Loan = 1)
 ```{r}
@@ -154,8 +155,8 @@ F. Compare this value with the one obtained from the pivot table in (b). Which i
 library(caret)
 library(e1071)
 naive.train = train.df[,c(10,13,14)] # training data is from Personal loan, Creditcard and online. column 
-naive.test =valid.df[,c(10,13,14)] # testing set data from the same cloumns of data 
-naivebayes = naiveBayes(Personal.Loan~.,data=naive.train) # applying naive bayes to personal loan and training data. 
+naive.test =valid.df[,c(10,13,14)] # testing set data from the same columns of data 
+naivebayes = naiveBayes(Personal.Loan~.,data=naive.train) # applying naivebayes algorithm to personal loan and training data. 
 naivebayes
 
 ```
@@ -165,4 +166,4 @@ G. Which of the entries in this table are needed for computing P (Loan = 1 | CC 
 
 Answer: 
 
-the naive bayes is the exact same output we recieved in the previous methods. (.280)(.603)(.09)/(.280.603.09+.29.58.908) = .09 which is the same response provided as above.
+the naivebayes is the same output we got in the manual calculation method. (.280)(.603)(.09)/(.280.603.09+.29.58.908) = .09 which is the same as the manual calculation.
