@@ -38,7 +38,6 @@ head(NB3)
 NB3$Personal.Loan = as.factor(NB3$Personal.Loan) # converting Personal Loan into categorical data 
 NB3$Online = as.factor(NB3$Online) # converting Online into categorical data
 NB3$CreditCard = as.factor(NB3$CreditCard) # converting CreditCard into categorical data
-NB3
 ```
 
 #Data partition 60 % training and 40 % into validation 
@@ -46,10 +45,10 @@ NB3
 set.seed(1)
 train.index <- sample(row.names(NB3), 0.6*dim(NB3)[1])  # 60 % of data into training set
 valid.index <- setdiff(row.names(NB3), train.index)  # 40 %  into validation set 
-train.df <- NB3[train.index, ] # 
-valid.df <- NB3[valid.index, ]
-train <- NB3[train.index, ]
-valid = NB3[train.index,]
+train.df <- NB3[train.index, ] # assigning the train.index into data frame 
+valid.df <- NB3[valid.index, ] # assigning the validation index into data frame 
+train <- NB3[train.index, ] # Making a copy of the data frame train.df
+valid = NB3[train.index,]#  Making a copy of the data frame valid.df
 ```
 
 A. Create a pivot table for the training data with Online as a column variable, CC as a row variable, and Loan as a secondary row variable. The values inside the table should convey the count. In R use functions melt() and cast(), or function table().
@@ -76,15 +75,15 @@ C. Create two separate pivot tables for the training data. One will have Loan (r
 
 melt1 = melt(train,id=c("Personal.Loan"),variable = "Online") # Melting Personal loan and Online data into pivot table 
 
-melt2 = melt(train,id=c("CreditCard"),variable = "Online") # Melting Credicatd data with reference to online
+melt2 = melt(train,id=c("CreditCard"),variable = "Online") # Melting Credicard data with reference to online
 
 cast1 =dcast(melt1,Personal.Loan~Online) # Casting Personal loan and online values 
 cast2=dcast(melt2,CreditCard~Online) # Casting Personal loan and online values 
-Loanline=cast1[,c(1,13)] 
+Loanline=cast1[,c(1,13)]  
 LoanCC = cast2[,c(1,14)]
 
 Loanline # indicates  personal loan count in reference with online 
-LoanCC # Indicates Credit Card count in reference with onlin.
+LoanCC # Indicates Credit Card count in reference with online.
 ```
 
 D. Compute the following quantities [P (A | B) means “the probability of A given B”]:
