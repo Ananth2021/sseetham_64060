@@ -1,0 +1,201 @@
+---
+title: "Assignment 5 - Heirarchical Clustering"
+author: "S.S.Ananth Kumar"
+date: "10/11/2021"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    math: katex
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning = FALSE)
+```
+.libPaths("C:\\Users\\Ananth\\OneDrive\\Desktop\\MSBA Kent\\Fall 2021\\Fundamentals of Machine Learning\\Assignment\\Ass 2 ")
+install.packages("treemap")
+
+__Libraries__
+```{r}
+library(readr)
+library(tidyverse)
+library(cluster)
+library(caret)
+library(factoextra)
+library(dendextend)
+library(dplyr)
+library(treemap)
+```
+
+
+__Loading Data Into Dataframe__
+```{r}
+
+CerealsData  <- read.csv("cereals.csv")
+
+#Structure of the data cereals
+str(CerealsData)
+
+```
+
+__Data-preparations__
+
+```{r}
+#checking for Null values , there are 4 missing values in column carbo, sugars and potass
+
+colSums(is.na(CerealsData))
+
+#removing the missing values 
+
+CerealsData <- na.omit(CerealsData)
+
+# Considering only numerical data from column 4 to 16 
+CerealsData <- CerealsData[4:16] 
+
+str(CerealsData)
+
+```
+
+
+
+```{r}
+
+#scaling the dataset(Z standards)
+
+ScaledCereal <- as.data.frame(scale(CerealsData))
+
+```
+
+Apply hierarchical clustering to the data using Euclidean distance to the normalized measurements. Use Agnes to compare the clustering from single linkage, complete linkage, average linkage, and Ward. Choose the best method.
+
+__Model design , using different methods to find out which is more accurate.Using Agnes method we can compare the clusting from single,complete, Average and war linkage method__
+
+```{r}
+
+complete <- agnes(ScaledCereal, method = "complete")
+
+complete$ac # Agglomerative coefficient is 83 %, stronger cluster structure
+
+```
+
+__Single method computes all pairwise dissimilarities between the elements in cluster 1 and the elements in cluster 2, and considers the smallest of these dissimilarities as a linkage criterion. It tends to produce long clusters.__
+
+```{r}
+single <- agnes(ScaledCereal, method = "single")
+
+single$ac # Agglomerative coefficient is 60 %, weaker cluster structure. 
+```
+__Average method computes all pairwise dissimilarities between the elements in cluster 1 and the elements in cluster 2, and considers the average of these dissimilarities as the distance between the two clusters.__
+```{r}
+
+
+average <- agnes(ScaledCereal, method = "average")
+
+average$ac #Agglomerative coefficient is 77 %, average cluster structure 
+
+```
+
+__Ward method minimizes the total within-cluster variance. At each step the pair of clusters with minimum between-cluster distance are merged.__
+
+```{r}
+
+Ward  <- agnes(ScaledCereal, method = "ward")
+
+plot(Ward)
+
+Ward$ac # Agglomerative coefficeint is 90 %,stronger cluster structure 
+
+
+```
+
+__From the below Agnes function we see that the Ward method has the strong cluster structure with Agglomerative coefficient of 90% . value close to 1 indicate that structure is stronger.__
+
+```{r}
+data.frame(complete$ac,single$ac,average$ac,Ward$ac)
+
+```
+
+__● How many clusters would you choose?__
+```{r}
+
+HICereals <- agnes(ScaledCereal,method="ward")
+
+#visualizing the dendogram
+
+pltree(HICereals,cex = 0.7 , hang = -1 , main = "Dendrogram of Agnes using ward method")
+
+# k value can be determined by looking at the largest difference of height, so K =5 is the optimum.
+plot(HICereals)
+rect.hclust(HICereals, k = 5, border = 1:5,)
+abline(h=12,lty=12)
+
+
+
+
+```
+
+
+```{r}
+#cutting tree
+cluster_Tree = cutree(HICereals,k=5)
+Cereals_C <- mutate(ScaledCereal,cluster=cluster_Tree)
+Cereals_C$cluster # no of cluster
+```
+
+
+__Partitioning the data__ 
+
+```{r}
+
+library(caret)
+# creating 80% partition of the cluster data
+set.seed(1234)
+Partition <- createDataPartition(Cereals_C$cluster, p = 0.8 , list = FALSE)
+
+A <- Cereals_C[Partition,]
+B <- Cereals_C[-Partition,]
+
+#Finding centroids for A by gathering features and values in partition and grouping is applied by cluster features and then summmarizing the mean values 
+
+CentroidA <- A %>% gather("features","values",-cluster) %>% group_by(cluster,features) %>% summarise(mean_values = mean(values)) %>% spread(features,mean_values) 
+
+CentroidA # Centroids for each cluseter per column 
+
+ClusterB <- data.frame(data=seq(1,nrow(B),1),BClus = rep(0,nrow(B))) # Finding cluster B from the columns and no of row in B and for cluster it is repeated till the last element in last row in B is identified 
+
+#Finding minimum distance between centroids in A and each observation in B
+#this for loop will essentially calcuate the distance between centroid and Each observation of B till for the complete length of the observation from min vales to the max. x is the element in B 
+
+for (x in 1:nrow(B)) { 
+  
+  ClusterB$BClus[x] <- which.min(as.matrix(get_dist(as.data.frame(rbind(CentroidA[-1],B[x,-length(B)])))) [6,-6])
+  
+}
+
+#Comparing B partition with original data , with the original cluster we are comparing what has changed in the new cluster in B. 
+
+ClusterB <- ClusterB %>% mutate(originalclust = B$cluster)
+mean(ClusterB$BClus == ClusterB$originalclust)
+
+```
+
+based on the above analysis both the original and predicted cluster are 92 % matching. hence cluster have a good stability but some of the distances might be large causing it not to be 100%. This might be due to the data partition. 
+
+-----------------------------------
+
+__The elementary public schools would like to choose a set of cereals to include in their daily cafeterias. Every day a different cereal is offered, but all cereals should support a healthy diet. For this goal, you are requested to find a cluster of “healthy cereals.” Should the data be normalized? If not, how should they be used in the cluster analysis?__
+
+```{r}
+HealthyC <- split(Cereals_C,Cereals_C$cluster) # splitting Cereal cluster from cereal_c data frame
+HealthyM <-lapply(HealthyC,colMeans) # Lapply is used to apply a function over a vector/dataframe and returns the same length 
+(centroids <- do.call(rbind,HealthyM)) # binding data frame which has means to centroids.
+
+heatmap(centroids) # heatmapof the centroids.s
+
+
+```
+
+Based on the above analysis, we can observe that the cluster 1(Bran Cereals) is recommended for children as it has high protein ,fiber,potassium and low on calories,sugars and carbs. 
+
